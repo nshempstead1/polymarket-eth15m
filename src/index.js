@@ -125,7 +125,7 @@ async function main() {
       console.log(`${C.bold}════════════════════════════════════════════════════════════${C.reset}`);
       console.log(`${C.bold}  🎯 POLYMARKET ETH 15-MIN BOT                              ${C.reset}`);
       console.log(`${C.bold}════════════════════════════════════════════════════════════${C.reset}`);
-      console.log(`  BTC: $${fmt(price, 0)} | VWAP: $${fmt(signals.vwap, 0)} | RSI: ${fmt(signals.rsi, 1)}`);
+      console.log(`  ETH: $${fmt(price, 0)} | VWAP: $${fmt(signals.vwap, 0)} | RSI: ${fmt(signals.rsi, 1)}`);
       console.log(`  Model: ${C.green}UP ${(scored.rawUp * 100).toFixed(1)}%${C.reset} / ${C.red}DOWN ${((1 - scored.rawUp) * 100).toFixed(1)}%${C.reset}`);
       console.log(`  Balance: $${fmt(balance, 2)} USDC.e`);
       console.log("");

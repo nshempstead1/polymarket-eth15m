@@ -20,7 +20,7 @@ export async function fetchKlines({ interval = "1m", limit = 100 } = {}) {
   try {
     // CryptoCompare histominute endpoint
     const res = await fetch(
-      `${CRYPTOCOMPARE_API}/v2/histominute?fsym=BTC&tsym=USD&limit=${limit}`
+      `${CRYPTOCOMPARE_API}/v2/histominute?fsym=ETH&tsym=USD&limit=${limit}`
     );
     
     if (!res.ok) throw new Error(`CryptoCompare error: ${res.status}`);
@@ -64,7 +64,7 @@ export async function fetchLastPrice() {
   
   try {
     const res = await fetch(
-      `${CRYPTOCOMPARE_API}/price?fsym=BTC&tsyms=USD`
+      `${CRYPTOCOMPARE_API}/price?fsym=ETH&tsyms=USD`
     );
     if (!res.ok) throw new Error(`CryptoCompare error: ${res.status}`);
     
