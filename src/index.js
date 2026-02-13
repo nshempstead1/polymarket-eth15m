@@ -125,7 +125,7 @@ async function main() {
       console.log(`${C.bold}════════════════════════════════════════════════════════════${C.reset}`);
       console.log(`${C.bold}  🎯 POLYMARKET ETH 15-MIN BOT                              ${C.reset}`);
       console.log(`${C.bold}════════════════════════════════════════════════════════════${C.reset}`);
-      console.log(`  ETH: $${fmt(price, 0)} | VWAP: $${fmt(signals.vwap, 0)} | RSI: ${fmt(signals.rsi, 1)}`);
+      console.log(`  BTC: $${fmt(price, 0)} | VWAP: $${fmt(signals.vwap, 0)} | RSI: ${fmt(signals.rsi, 1)}`);
       console.log(`  Model: ${C.green}UP ${(scored.rawUp * 100).toFixed(1)}%${C.reset} / ${C.red}DOWN ${((1 - scored.rawUp) * 100).toFixed(1)}%${C.reset}`);
       console.log(`  Balance: $${fmt(balance, 2)} USDC.e`);
       console.log("");
@@ -169,23 +169,30 @@ async function main() {
         console.log(`  Time: ${timeColor}${fmtTime(timeLeft)}${C.reset} | UP: ${market.upPrice.toFixed(0)}¢ | DOWN: ${market.downPrice.toFixed(0)}¢`);
         console.log(`  Edge: ${edge.edgeUp > 0 ? C.green : C.red}${(edge.edgeUp * 100).toFixed(1)}% UP${C.reset} / ${edge.edgeDown > 0 ? C.green : C.red}${(edge.edgeDown * 100).toFixed(1)}% DOWN${C.reset}`);
         
+        // Show existing position if any
         if (posInfo) {
           const pnlColor = posInfo.cashPnl >= 0 ? C.green : C.red;
           console.log(`  ${C.bold}POSITION:${C.reset} ${posInfo.outcome} ${posInfo.size.toFixed(0)} @ ${(posInfo.avgPrice * 100).toFixed(0)}¢ | ${pnlColor}$${posInfo.cashPnl.toFixed(2)}${C.reset}`);
-        } else if (decision.action === "ENTER" && !state.hasPosition(market.slug)) {
-          const decColor = decision.side === "UP" ? C.green : C.red;
-          console.log(`  ${C.bold}>>> ${decColor}🎯 TRADE ${decision.side}${C.reset} (${decision.strength}, ${(decision.edge * 100).toFixed(1)}% edge)`);
+        }
+        
+        // CONTINUOUS EDGE BETTING: Add to position whenever edge exists
+        if (decision.action === "ENTER" && AUTO_TRADE && balance > 5) {
+          // Calculate current exposure on this market
+          const currentExposure = posInfo ? posInfo.currentValue : 0;
+          const maxExposure = CONFIG.trading.maxPositionUsd;
+          const remainingCapacity = Math.max(0, maxExposure - currentExposure);
           
-          // Auto-execute trade
-          if (AUTO_TRADE && balance > 10) {
-            const tradeSize = Math.min(
-              CONFIG.trading.maxPositionUsd,
-              balance * CONFIG.trading.kellyFraction * decision.edge * 10
-            );
+          // Only add if we have capacity and edge is sufficient
+          if (remainingCapacity >= 3 && decision.edge >= CONFIG.trading.minEdge) {
+            const edgeBasedSize = balance * CONFIG.trading.kellyFraction * decision.edge * 10;
+            const tradeSize = Math.min(remainingCapacity, edgeBasedSize, balance * 0.3);
             
-            if (tradeSize >= 5) { // Min $5 trade
+            if (tradeSize >= 3) { // Min $3 trade
               const tokenId = decision.side === "UP" ? market.upTokenId : market.downTokenId;
               const price = decision.side === "UP" ? market.upPrice : market.downPrice;
+              
+              const decColor = decision.side === "UP" ? C.green : C.red;
+              console.log(`  ${C.bold}>>> ${decColor}🎯 ADDING ${decision.side}${C.reset} $${tradeSize.toFixed(0)} (${(decision.edge * 100).toFixed(1)}% edge, ${currentExposure > 0 ? 'scaling in' : 'new'})`);
               
               if (tokenId) {
                 executeTrade({
@@ -195,7 +202,6 @@ async function main() {
                   price,
                   slug: market.slug,
                   outcome: decision.side,
-                  // Signal snapshot for learning/backtesting
                   signals: {
                     price: signals.price,
                     vwap: signals.vwap,
@@ -210,9 +216,11 @@ async function main() {
                 }).catch(err => console.error("Trade error:", err.message));
               }
             }
+          } else if (remainingCapacity < 3) {
+            console.log(`  ${C.gray}>>> MAX POSITION (${currentExposure.toFixed(0)}/${maxExposure})${C.reset}`);
           }
-        } else {
-          console.log(`  ${C.gray}>>> NO TRADE (${decision.reason})${C.reset}`);
+        } else if (decision.action !== "ENTER") {
+          console.log(`  ${C.gray}>>> NO EDGE (${decision.reason})${C.reset}`);
         }
       }
       
