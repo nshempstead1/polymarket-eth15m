@@ -1,0 +1,14 @@
+{
+  "name": "polymarket-eth15m",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dashboard": "node src/index.js --dashboard"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "ethers": "^6.16.0",
+    "ws": "^8.14.0"
+  }
+}
